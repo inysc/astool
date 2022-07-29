@@ -27,7 +27,7 @@ func NewType(expr ast.Expr) (typ *Type) {
 	switch ex := expr.(type) {
 	case *ast.StarExpr:
 		typ.Ptr = true
-		tmp := NewType(ex)
+		tmp := NewType(ex.X)
 		typ.Pkg = tmp.Pkg
 		typ.Type = tmp.Type
 	case *ast.SelectorExpr:
