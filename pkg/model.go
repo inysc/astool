@@ -61,6 +61,7 @@ func NewStructField(field *ast.Field) *StructField {
 	tag := ""
 	if field.Tag != nil {
 		tag = field.Tag.Value
+		tag = tag[1 : len(tag)-1]
 	}
 	comment := ""
 	if field.Comment != nil {
