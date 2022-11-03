@@ -1,0 +1,30 @@
+// {{ .rule }}
+{{- if len_gt_0 .tags }}
+for _, _{{ .field_name }}_{{ .index }}_v1 := range {{ .tags }} {
+    for _, _{{ .field_name }}_{{ .index }}_v2 := range tags {
+        if _{{ .field_name }}_{{ .index }}_v1 == _{{ .field_name }}_{{ .index }}_v2 {
+{{- end }}
+            if i.{{ .field_name }} != nil {
+                _{{ .field_name }}_{{ .index }}_enum_found := false
+                _{{ .field_name }}_{{ .index }}_tmp := *(i.{{ .field_name }})
+                for _, _{{ .field_name }}_{{ .index }}_v3 := range {{ .rule }} {
+                    if _{{ .field_name }}_{{ .index }}_tmp == _{{ .field_name }}_{{ .index }}_v3 {
+                        _{{ .field_name }}_{{ .index }}_enum_found = true
+                        break
+                    }
+                }
+
+                if !_{{ .field_name }}_{{ .index }}_enum_found {
+                    {{- if len_gt_0 .message }}
+                    err = {{ .message }}
+                    {{- else }}
+                    err = errors.New(`invalid<not>: each of {{ .struct_name }}.{{ .field_name }} must not be {{ .rule }}`)
+                    {{- end }}
+                    return
+                }
+            }
+{{- if len_gt_0 .tags }}
+        }
+    }
+}
+{{- end }}

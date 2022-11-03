@@ -1,4 +1,4 @@
-package pkg
+package astool
 
 import (
 	"go/ast"

@@ -1,9 +1,11 @@
-package pkg
+package astool
 
 import (
 	"go/ast"
 	"go/token"
 	"reflect"
+
+	"golang.org/x/tools/go/packages"
 )
 
 type Type struct {
@@ -96,6 +98,34 @@ func NewStructInfo(pkg, name string, st *ast.StructType) *StructInfo {
 }
 
 func EasyStructInfo(name, path string) (si *StructInfo) {
-	pkg := ParsePackage([]string{path}, []string{})
+	pkg := ParsePackage(path, []string{})
 	return NewStructInfo(pkg.Name, name, GetStruct(name, pkg.Syntax...))
+}
+
+type Package struct {
+	Pkg     *packages.Package
+	Structs map[string]*StructInfo
+}
+
+func EasyStructInfos(path string, name []string, tags ...string) *Package {
+	pkg := Package{
+		Pkg:     ParsePackage(path, []string{}),
+		Structs: make(map[string]*StructInfo, len(name)),
+	}
+	set := NewSet(name...)
+	for _, v := range pkg.Pkg.Syntax {
+		for _, v := range v.Decls {
+			if decl, ok := v.(*ast.GenDecl); ok {
+				for _, v := range decl.Specs {
+					if ts, ok := v.(*ast.TypeSpec); ok {
+						if set.Has(ts.Name.Name) {
+							pkg.Structs[ts.Name.Name] = NewStructInfo(pkg.Pkg.Name, ts.Name.Name, ts.Type.(*ast.StructType))
+							set.Delete(ts.Name.Name)
+						}
+					}
+				}
+			}
+		}
+	}
+	return &pkg
 }

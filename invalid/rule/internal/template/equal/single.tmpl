@@ -1,0 +1,19 @@
+// {{ .rule }}
+{{- if len_gt_0 .tags }}
+for _, _{{ .field_name }}_{{ .index }}_v1 := range {{ .tags }} {
+    for _, _{{ .field_name }}_{{ .index }}_v2 := range tags {
+        if _{{ .field_name }}_{{ .index }}_v1 == _{{ .field_name }}_{{ .index }}_v2 {
+{{- end }}
+            if i.{{ .field_name }} != {{ .rule }} {
+                {{- if len_gt_0 .message }}
+                err = {{ .message }}
+                {{- else }}
+                err = errors.New(`invalid<not>: {{ .struct_name }}.{{ .field_name }} must not be {{ .rule }}`)
+                {{- end }}
+                return
+            }
+{{- if len_gt_0 .tags }}
+        }
+    }
+}
+{{- end }}

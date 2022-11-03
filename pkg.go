@@ -1,4 +1,4 @@
-package pkg
+package astool
 
 import (
 	"fmt"
@@ -12,13 +12,13 @@ const PkgMode = packages.NeedName | packages.NeedFiles | packages.NeedCompiledGo
 	packages.NeedImports | packages.NeedTypes | packages.NeedTypesSizes |
 	packages.NeedSyntax | packages.NeedTypesInfo
 
-func ParsePackage(patterns []string, tags []string) *packages.Package {
+func ParsePackage(pattern string, tags []string) *packages.Package {
 	cfg := &packages.Config{
 		Mode:       PkgMode,
 		Tests:      false, // 不应当支持测试文件
 		BuildFlags: []string{fmt.Sprintf("-tags=%s", strings.Join(tags, " "))},
 	}
-	pkgs, err := packages.Load(cfg, patterns...)
+	pkgs, err := packages.Load(cfg, pattern)
 	if err != nil {
 		log.Fatal(err)
 	}
