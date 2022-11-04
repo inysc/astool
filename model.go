@@ -3,6 +3,7 @@ package astool
 import (
 	"go/ast"
 	"go/token"
+	"log"
 	"reflect"
 
 	"golang.org/x/tools/go/packages"
@@ -65,10 +66,7 @@ func NewStructField(field *ast.Field) *StructField {
 		tag = field.Tag.Value
 		tag = tag[1 : len(tag)-1]
 	}
-	comment := ""
-	if field.Comment != nil {
-		comment = field.Comment.Text()
-	}
+	comment := field.Doc.Text()
 	return &StructField{
 		Name:    field.Names[0].Name,
 		Type:    NewType(field.Type),
@@ -86,6 +84,7 @@ type StructInfo struct {
 func NewStructInfo(pkg, name string, st *ast.StructType) *StructInfo {
 	fields := make([]*StructField, 0, len(st.Fields.List))
 
+	log.Printf("%+v", st)
 	for _, field := range st.Fields.List {
 		fields = append(fields, NewStructField(field))
 	}

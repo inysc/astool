@@ -1,9 +1,11 @@
 package astool
 
 import (
+	"errors"
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"os"
 )
 
 var mode = parser.ParseComments | parser.DeclarationErrors | parser.AllErrors
@@ -32,4 +34,24 @@ func GetStruct(structName string, files ...*ast.File) *ast.StructType {
 		}
 	}
 	return nil
+}
+
+func ReadFile(file string) ([]byte, error) {
+	// 判断文件是否存在
+	bs, err := os.ReadFile(file)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return []byte{}, nil
+		}
+		return nil, err
+	}
+	return bs, nil
+}
+
+func MustReadFile(file string) []byte {
+	bs, err := ReadFile(file)
+	if err != nil {
+		panic(err)
+	}
+	return bs
 }

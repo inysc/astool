@@ -2,7 +2,9 @@ package astool
 
 import (
 	"fmt"
+	"go/ast"
 	"log"
+	"os"
 	"strings"
 
 	"golang.org/x/tools/go/packages"
@@ -25,5 +27,13 @@ func ParsePackage(pattern string, tags []string) *packages.Package {
 	if len(pkgs) != 1 {
 		log.Fatalf("error: %d packages found", len(pkgs))
 	}
+	f, err := os.OpenFile("1.ast", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	ast.Fprint(f, pkgs[0].Fset, pkgs[0].Syntax[0], nil)
+
 	return pkgs[0]
 }

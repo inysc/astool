@@ -25,7 +25,11 @@ func (r *Rule) Rule() string {
 }
 
 func (r *Rule) Message() string {
-	return r.Get("message")
+	message := r.Get("message")
+	if strings.HasSuffix(message, ".Error()") {
+		return strings.TrimSuffix(message, ".Error()")
+	}
+	return fmt.Sprintf("errors.New(%s)", message)
 }
 
 func (r *Rule) Tags() string {
