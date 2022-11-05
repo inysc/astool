@@ -24,7 +24,7 @@ func RemoveBytes(content []byte, structNames ...string) []byte {
 				case *ast.ValueSpec:
 					for _, structName := range structNames {
 						if strings.HasPrefix(spec.Names[0].Name, "_"+structName+"_") {
-							ps = append(ps, MakePair(spec.Pos()-1, spec.End()))
+							ps = append(ps, MakePair(gen.Pos()-1, gen.End()))
 							break
 						}
 					}
@@ -41,14 +41,14 @@ func RemoveBytes(content []byte, structNames ...string) []byte {
 					case *ast.Ident:
 						for _, structName := range structNames {
 							if x.Name == structName {
-								ps = append(ps, MakePair(x.Pos()-1, x.End()))
+								ps = append(ps, MakePair(gen.Pos()-1, gen.End()))
 								break
 							}
 						}
 					case *ast.IndexExpr:
 						for _, structName := range structNames {
 							if x.X.(*ast.Ident).Name == structName {
-								ps = append(ps, MakePair(x.Pos()-1, x.End()))
+								ps = append(ps, MakePair(gen.Pos()-1, gen.End()))
 								break
 							}
 						}

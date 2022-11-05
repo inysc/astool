@@ -1,7 +1,6 @@
 package rule
 
 import (
-	"log"
 	"sort"
 	"strings"
 
@@ -27,8 +26,6 @@ func NewRule(structName string, field *astool.StructField) string {
 			comment = comment[idx+3:]
 			comment = strings.TrimSpace(comment)
 			rule := internal.ParseComment(comment)
-			log.Printf("rule: %+v", rule)
-			log.Printf("comment: %v", comment)
 
 			switch rule.Iden {
 			case "Not": // 禁止值
