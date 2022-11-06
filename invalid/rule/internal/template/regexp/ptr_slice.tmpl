@@ -1,10 +1,10 @@
 if i.{{ .field_name }} != nil {
     for _, _{{ .field_name }}_{{ .index }}_v3 := range *(i.{{ .field_name }}) {
-        if _{{ .field_name }}_{{ .index }}_v3 != {{ .rule }} {
+        if _{{ .field_name }}_{{ .index }}_v3 == {{ .rule }} {
             {{- if len_gt_0 .message }}
             err = {{ .message }}
             {{- else }}
-            err = errors.New(`invalid<not>: each of {{ .struct_name }}.{{ .field_name }} must not be {{ .rule }}`)
+            err = errors.New(`invalid<Regexp>: each of {{ .struct_name }}.{{ .field_name }} must conform to the regex<{{ .regex_value }}>`)
             {{- end }}
             return
         }

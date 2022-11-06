@@ -1,6 +1,7 @@
 package rule
 
 import (
+	"log"
 	"sort"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 
 type Ruler interface {
 	Prio() int     // 优先级
+	Vars() string  // 使用的全局变量初始化
 	Check() string // 对应的方法内容
 }
 
@@ -28,30 +30,24 @@ func NewRule(structName string, field *astool.StructField) string {
 			rule := internal.ParseComment(comment)
 
 			switch rule.Iden {
-			case "Not": // 禁止值
-				rules = append(rules, internal.NewNotRule(structName, field.Name, field.Type.String(), rule))
-			case "Equal": // 等于值
-				rules = append(rules, internal.NewEqualRule(structName, field.Name, field.Type.String(), rule))
-			case "Enum": // 枚举值
-				rules = append(rules, internal.NewEnumRule(structName, field.Name, field.Type.String(), rule))
-			case "Range": // 区间限制
-			case "RangeTime": // 时间区间限制
-			case "Length": // 区间限制
-			case "LengthUtf8": // 区间限制
-			case "Regexp": // 正则约束
-			case "Default": // 默认值
-			case "Invalid": // 标注已实现 interface { Invalid() error
-			case "Unique": // 唯一值
+			case "Not", "Equal", "Enum", "Regexp", "Default", "Duck", "Unique":
+				rules = append(rules, internal.NewCommonRule(structName, field.Name, field.Type.String(), rule))
+			case "Range", "RangeTime", "Length", "LengthUtf8":
+				rules = append(rules, internal.NewRangeRule(structName, field.Name, field.Type.String(), rule))
 			default:
+				log.Fatalf("unknown rule: <%s>", rule.Iden)
 			}
 		}
 	}
-	sort.Slice(rules, func(i, j int) bool { return rules[i].Prio() > rules[j].Prio() })
+	sort.Slice(rules, func(i, j int) bool { return rules[i].Prio() < rules[j].Prio() })
 
 	if len(rules) != 0 {
+		for _, rule := range rules {
+			bs.WriteString(rule.Vars())
+		}
 		bs.Pf("func (i *%[1]s)_%[1]s_Invalid_%[2]s(tags []string) (err error) {", structName, field.Name)
-		for _, v := range rules {
-			bs.P(v.Check())
+		for _, rule := range rules {
+			bs.P(rule.Check())
 		}
 		bs.P("    return nil")
 		bs.P("}\n")

@@ -1,0 +1,6 @@
+defer func() {
+    if err != nil {
+        i.{{ .field_name }} = {{ .rule }}
+        err = nil
+    }
+}()

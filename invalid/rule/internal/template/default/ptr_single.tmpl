@@ -1,0 +1,7 @@
+defer func() {
+    if err != nil {
+        var tmp {{ remove_ptr .field_type }} = {{ .rule }}
+        i.{{ .field_name }} = &tmp
+        err = nil
+    }
+}()

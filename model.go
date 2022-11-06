@@ -3,7 +3,6 @@ package astool
 import (
 	"go/ast"
 	"go/token"
-	"log"
 	"reflect"
 
 	"golang.org/x/tools/go/packages"
@@ -11,6 +10,7 @@ import (
 
 type Type struct {
 	Ptr  bool
+	Arr  bool
 	Pkg  string
 	Type string
 }
@@ -18,6 +18,9 @@ type Type struct {
 func (t *Type) String() (ret string) {
 	if t.Ptr {
 		ret += "*"
+	}
+	if t.Arr {
+		ret += "[]"
 	}
 	if t.Pkg != "" {
 		ret += t.Pkg + "."
@@ -39,6 +42,11 @@ func NewType(expr ast.Expr) (typ *Type) {
 		typ.Type = ex.Sel.Name
 	case *ast.Ident:
 		typ.Type = ex.Name
+	case *ast.ArrayType:
+		tmp := NewType(ex.Elt)
+		typ.Arr = true
+		typ.Pkg = tmp.Pkg
+		typ.Type = tmp.Type
 	default:
 		fset := token.NewFileSet()
 		ast.Print(fset, expr)
@@ -84,7 +92,6 @@ type StructInfo struct {
 func NewStructInfo(pkg, name string, st *ast.StructType) *StructInfo {
 	fields := make([]*StructField, 0, len(st.Fields.List))
 
-	log.Printf("%+v", st)
 	for _, field := range st.Fields.List {
 		fields = append(fields, NewStructField(field))
 	}

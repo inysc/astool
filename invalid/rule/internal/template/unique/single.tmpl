@@ -1,0 +1,12 @@
+var mp_{{ .index }} = make(map[{{ remove_slice .field_type }}]struct{}, len(i.{{ .field_name }}))
+for _, v{{ .index }} := range i.{{ .field_name }} {
+    mp_{{ .index }}[v{{ .index }}] = struct{}{}
+}
+if len(mp_{{ .index }}) != len(i.{{ .field_name }}) {
+    {{- if len_gt_0 .message }}
+    err = {{ .message }}
+    {{- else }}
+    err = errors.New("each of {{ .struct_name }}.{{ .field_name }} must be unique")
+    {{- end }}
+    return
+}

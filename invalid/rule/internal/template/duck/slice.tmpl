@@ -1,20 +1,9 @@
-// {{ .rule }}
-{{- if len_gt_0 .tags }}
-for _, _{{ .field_name }}_{{ .index }}_v1 := range {{ .tags }} {
-    for _, _{{ .field_name }}_{{ .index }}_v2 := range tags {
-        if _{{ .field_name }}_{{ .index }}_v1 == _{{ .field_name }}_{{ .index }}_v2 {
-{{- end }}
-            for _, _{{ .field_name }}_{{ .index }}_v3 := range i.{{ .field_name }} {
-                err = _{{ .field_name }}_{{ .index }}_v3.Invalid(tags...)
-                if err != nil {
-                    {{- if len_gt_0 .message }}
-                    err = {{ .message }}
-                    {{- end }}
-                    return
-                }
-            }
-{{- if len_gt_0 .tags }}
-        }
+for _, _{{ .field_name }}_{{ .index }}_v3 := range i.{{ .field_name }} {
+    err = _{{ .field_name }}_{{ .index }}_v3.Invalid(tags...)
+    if err != nil {
+        {{- if len_gt_0 .message }}
+        err = {{ .message }}
+        {{- end }}
+        return
     }
 }
-{{- end }}

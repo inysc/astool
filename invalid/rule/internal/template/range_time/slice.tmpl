@@ -14,7 +14,7 @@ for _, _{{ .field_name }}_{{ .index }}_v3 := range i.{{ .field_name }} {
         {{- if len_gt_0 .message }}
         err = {{ .message }}
         {{- else }}
-        err = errors.New(`invalid<Range>:{{ .struct_name }}.{{ .field_name }} must be {{ tRo .right }} {{ .right_val }}`)
+        err = errors.New(`invalid<RangeTime>: {{ .struct_name }}.{{ .field_name }} must be {{ tRo .right }} {{ .right_val }}`)
         {{- end }}
         return
     }

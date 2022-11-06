@@ -29,17 +29,25 @@ func (r *Rule) Message() string {
 	if strings.HasSuffix(message, ".Error()") {
 		return strings.TrimSuffix(message, ".Error()")
 	}
+	if message == "" {
+		return ""
+	}
 	return fmt.Sprintf("errors.New(%s)", message)
 }
 
 func (r *Rule) Tags() string {
-	return r.Get("tags")
+	tags := r.Get("tags")
+
+	if len(tags) > 0 && tags[0] == '{' {
+		return "[]string" + tags
+	}
+	return tags
 }
 
 func (r *Rule) Get(key string) string {
 	for _, v := range r.Pairs {
 		if v.First == key {
-			return v.Second
+			return strings.TrimSpace(v.Second)
 		}
 	}
 	return ""
@@ -128,9 +136,9 @@ func (r *Rule) splitKeyValues(index int, rule []byte) {
 	}
 	r.Pairs[index].Second = string(bytes.TrimSpace(rule[:idx]))
 	if r.Pairs[index].First == "" {
-		r.Pairs[index].First = r.GetFirstDefault(index)
+		r.Pairs[index].First = r.KeyDefault(index)
 	}
-	if r.Pairs[index].First != r.GetFirstDefault(index) {
+	if r.Pairs[index].First != r.KeyDefault(index) {
 		log.Fatalf("unknown key<%s> in rule<%s>", r.Pairs[index].First, r.Iden)
 	}
 
@@ -179,12 +187,15 @@ func isWord(b byte) bool {
 		(b >= '0' && b <= '9')
 }
 
-func (r *Rule) GetFirstDefault(idx int) string {
+func (r *Rule) KeyDefault(idx int) string {
 	if r.Iden == "RangeTime" && idx > 0 {
 		if idx == 1 {
 			return "format"
 		}
 		idx--
+	} else if r.Iden == "Duck" || r.Iden == "Unique" {
+		idx++
 	}
+
 	return [...]string{"rule", "message", "tags"}[idx]
 }

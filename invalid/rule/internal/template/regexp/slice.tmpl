@@ -1,0 +1,10 @@
+for _, v{{ .index }} := range i.{{ .field_name }} {
+    if  v{{ .index }} == {{ .rule }} {
+        {{- if len_gt_0 .message }}
+        err = {{ .message }}
+        {{- else }}
+        err = errors.New(`invalid<Regexp>: each of {{ .struct_name }}.{{ .field_name }} must conform to the regex<{{ .regex_value }}>`)
+        {{- end }}
+        return
+    }
+}

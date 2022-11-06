@@ -62,7 +62,6 @@ func main() {
 }
 
 func Parse(st *astool.StructInfo) {
-	fmt.Printf("st: %v\n", st)
 	fns := []string{}
 	for _, v := range st.Fields {
 		str := rule.NewRule(st.Name, v)
@@ -98,12 +97,14 @@ func SaveFile() {
 		bs.P(`    "fmt"`)
 		bs.P(`    "regexp"`)
 		bs.P(`    "time"`)
+		bs.P(`    "unicode/utf8"`)
 		bs.P(")\n")
 		bs.P("var (")
 		bs.P(`    _ = fmt.Errorf`)
 		bs.P(`    _ = regexp.MustCompile`)
 		bs.P(`    _ = time.Parse`)
 		bs.P(`    _ = errors.New`)
+		bs.P(`    _ = utf8.RuneCountInString`)
 		bs.P(")\n")
 	} else {
 		content = astool.RemoveBytes(content, types...)
