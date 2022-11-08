@@ -71,7 +71,7 @@ func (rr *RangeRule) Vars() string {
 func NewRangeRule(structName, fieldName, fieldType string, rule *Rule) *RangeRule {
 	INDEX++
 
-	ruleval := rule.Rule()
+	ruleval := rule.Rule(rule.Iden, fieldType)
 	// 去除前后的引号
 	ruleval = ruleval[1 : len(ruleval)-1]
 	left, right := ">", "<"

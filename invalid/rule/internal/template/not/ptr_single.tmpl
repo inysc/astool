@@ -1,4 +1,4 @@
-if i.{{ .field_name }} != nil && i.{{ .field_name }} == {{ .rule }} {
+if i.{{ .field_name }} != nil && *i.{{ .field_name }} == {{ .rule }} {
     {{- if len_gt_0 .message }}
     err = {{ .message }}
     {{- else }}

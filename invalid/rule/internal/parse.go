@@ -20,8 +20,12 @@ type Rule struct {
 	Pairs [4]Pair
 }
 
-func (r *Rule) Rule() string {
-	return r.Get("rule")
+func (r *Rule) Rule(iden, typ string) string {
+	rule := r.Get("rule")
+	if iden == "Enum" && rule[0] == '{' {
+		return fmt.Sprintf("[]%s%s", remove_slice_ptr(typ), rule)
+	}
+	return rule
 }
 
 func (r *Rule) Message() string {

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"text/template"
 
 	"github.com/inysc/astool"
 )
@@ -70,7 +69,7 @@ func NewCommonRule(structName, fieldName, fieldType string, rule *Rule) *commonR
 
 	return &commonRule{
 		Iden:       rule.Iden,
-		Rule:       rule.Rule(),
+		Rule:       rule.Rule(rule.Iden, fieldType),
 		Tags:       rule.Tags(),
 		FieldName:  fieldName,
 		FieldType:  fieldType,
@@ -78,87 +77,4 @@ func NewCommonRule(structName, fieldName, fieldType string, rule *Rule) *commonR
 		Message:    rule.Message(),
 		StructName: structName,
 	}
-}
-
-func GetTmpl(iden, typ string) *template.Template {
-	if strings.HasPrefix(typ, "*[]") {
-		typ = "ptrslice"
-	} else if strings.HasPrefix(typ, "[]") {
-		typ = "slice"
-	} else if strings.HasPrefix(typ, "*") {
-		typ = "ptrsingle"
-	} else {
-		typ = "single"
-	}
-
-	val := map[string]map[string]*template.Template{
-		"Default": {
-			"single":    defaultSingleTmpl,
-			"ptrsingle": defaultPtrSingleTmpl,
-			"slice":     defaultSingleTmpl,
-			"ptrslice":  defaultPtrSingleTmpl,
-		},
-		"Duck": {
-			"single":    duckSingleTmpl,
-			"ptrsingle": duckPtrSliceTmpl,
-			"slice":     duckSliceTmpl,
-			"ptrslice":  duckPtrSliceTmpl,
-		},
-		"Enum": {
-			"single":    enumSingleTmpl,
-			"slice":     enumSliceTmpl,
-			"ptrsingle": enumPtrSingleTmpl,
-			"ptrslice":  enumPtrSliceTmpl,
-		},
-		"Equal": {
-			"single":    equalSingleTmpl,
-			"slice":     equalSliceTmpl,
-			"ptrsingle": equalPtrSingleTmpl,
-			"ptrslice":  equalPtrSliceTmpl,
-		},
-		"Length": {
-			"single":    lengthSingleTmpl,
-			"slice":     lengthSliceTmpl,
-			"ptrsingle": lengthPtrSingleTmpl,
-			"ptrslice":  lengthPtrSliceTmpl,
-		},
-		"LengthUtf8": {
-			"single":    lengthSingleTmpl,
-			"slice":     lengthSliceTmpl,
-			"ptrsingle": lengthPtrSingleTmpl,
-			"ptrslice":  lengthPtrSliceTmpl,
-		},
-		"Not": {
-			"single":    notSingleTmpl,
-			"slice":     notSliceTmpl,
-			"ptrsingle": notPtrSingleTmpl,
-			"ptrslice":  notPtrSliceTmpl,
-		},
-		"Range": {
-			"single":    rangeSingleTmpl,
-			"slice":     rangeSliceTmpl,
-			"ptrsingle": rangePtrSingleTmpl,
-			"ptrslice":  rangePtrSliceTmpl,
-		},
-		"RangeTime": {
-			"single":    rangeTimeSingleTmpl,
-			"slice":     rangeTimeSliceTmpl,
-			"ptrsingle": rangeTimePtrSingleTmpl,
-			"ptrslice":  rangeTimePtrSliceTmpl,
-		},
-		"Regexp": {
-			"single":    regexpSingleTmpl,
-			"slice":     regexpSliceTmpl,
-			"ptrsingle": regexpPtrSingleTmpl,
-			"ptrslice":  regexpPtrSliceTmpl,
-		},
-		"Unique": {
-			"single":    uniqueSingleTmpl,
-			"ptrsingle": uniquePtrSingleTmpl,
-			"slice":     uniqueSingleTmpl,
-			"ptrslice":  uniquePtrSingleTmpl,
-		},
-	}
-
-	return val[iden][typ]
 }

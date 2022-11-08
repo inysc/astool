@@ -29,7 +29,7 @@ func remove_slice(typ string) string {
 }
 
 func remove_slice_ptr(typ string) string {
-	return strings.TrimPrefix(typ, "*[]")
+	return strings.ReplaceAll(strings.ReplaceAll(typ, "*", ""), "[]", "")
 }
 
 // 取反关系运算符
