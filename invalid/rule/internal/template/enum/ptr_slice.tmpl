@@ -1,23 +1,23 @@
 if i.{{ .field_name }} != nil {
-_{{ .field_name }}_{{ .index }}_enum_found := false
-for _, _{{ .field_name }}_{{ .index }}_v3 := range *(i.{{ .field_name }}) {
-    for _, _{{ .field_name }}_{{ .index }}_v4 := range {{ .rule }} {
-        if _{{ .field_name }}_{{ .index }}_v3 == _{{ .field_name }}_{{ .index }}_v4 {
-            _{{ .field_name }}_{{ .index }}_enum_found = true
+    _{{ .field_name }}_{{ .index }}_enum_found := false
+    for _, v{{ .index }} := range *(i.{{ .field_name }}) {
+        for _, vv{{ .index }} := range {{ .rule }} {
+            if v{{ .index }} == vv{{ .index }} {
+                _{{ .field_name }}_{{ .index }}_enum_found = true
+                break
+            }
+        }
+        if _{{ .field_name }}_{{ .index }}_enum_found {
             break
         }
     }
-    if _{{ .field_name }}_{{ .index }}_enum_found {
-        break
-    }
-}
 
-if !_{{ .field_name }}_{{ .index }}_enum_found {
-    {{- if len_gt_0 .message }}
-    err = {{ .message }}
-    {{- else }}
-    err = errors.New(`invalid<not>: each of {{ .struct_name }}.{{ .field_name }} must not be {{ .rule }}`)
-    {{- end }}
-    return
-}
+    if !_{{ .field_name }}_{{ .index }}_enum_found {
+        {{- if len_gt_0 .message }}
+        err = {{ .message }}
+        {{- else }}
+        err = errors.New(`invalid<not>: each of {{ .struct_name }}.{{ .field_name }} must not be {{ .rule }}`)
+        {{- end }}
+        return
+    }
 }

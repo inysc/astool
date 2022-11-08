@@ -31,6 +31,7 @@ func (rr *RangeRule) Prio() int {
 func (rr *RangeRule) Check() string {
 	bs := astool.NewBytes()
 	tmplVal := map[string]any{
+		"iden":        rr.Iden,
 		"rule":        rr.Left,
 		"tags":        rr.Tags,
 		"field_name":  rr.FieldName,

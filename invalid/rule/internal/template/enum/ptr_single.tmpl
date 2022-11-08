@@ -1,8 +1,8 @@
 if i.{{ .field_name }} != nil {
     _{{ .field_name }}_{{ .index }}_enum_found := false
     _{{ .field_name }}_{{ .index }}_tmp := *(i.{{ .field_name }})
-    for _, _{{ .field_name }}_{{ .index }}_v3 := range {{ .rule }} {
-        if _{{ .field_name }}_{{ .index }}_tmp == _{{ .field_name }}_{{ .index }}_v3 {
+    for _, v{{ .index }} := range {{ .rule }} {
+        if _{{ .field_name }}_{{ .index }}_tmp == v{{ .index }} {
             _{{ .field_name }}_{{ .index }}_enum_found = true
             break
         }

@@ -2,6 +2,7 @@ package internal
 
 import (
 	_ "embed"
+	"fmt"
 	"log"
 	"strings"
 	"text/template"
@@ -30,6 +31,7 @@ func (cr *commonRule) Prio() int {
 func (cr *commonRule) Check() string {
 	bs := astool.NewBytes()
 	tmplVal := map[string]any{
+		"iden":        cr.Iden,
 		"rule":        cr.Rule,
 		"tags":        cr.Tags,
 		"field_name":  cr.FieldName,
@@ -38,7 +40,11 @@ func (cr *commonRule) Check() string {
 		"message":     cr.Message,
 		"struct_name": cr.StructName,
 	}
-	err := GetTmpl(cr.Iden, cr.FieldType).Execute(bs, tmplVal)
+	typ := cr.FieldType
+	if cr.Iden == "Not" && strings.HasPrefix(cr.Rule, "nil") {
+		typ = strings.TrimPrefix(typ, "*")
+	}
+	err := GetTmpl(cr.Iden, typ).Execute(bs, tmplVal)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,6 +52,9 @@ func (cr *commonRule) Check() string {
 }
 
 func (cr *commonRule) Vars() string {
+	if cr.Iden == "Regexp" {
+		return fmt.Sprintf("var _%s_%d = regexp.MustCompile(%s)\n", cr.StructName, cr.Index, cr.Rule)
+	}
 	return ""
 }
 
@@ -70,7 +79,7 @@ func GetTmpl(iden, typ string) *template.Template {
 	} else if strings.HasPrefix(typ, "[]") {
 		typ = "slice"
 	} else if strings.HasPrefix(typ, "*") {
-		typ = "ptr"
+		typ = "ptrsingle"
 	} else {
 		typ = "single"
 	}
@@ -99,6 +108,18 @@ func GetTmpl(iden, typ string) *template.Template {
 			"slice":     equalSliceTmpl,
 			"ptrsingle": equalPtrSingleTmpl,
 			"ptrslice":  equalPtrSliceTmpl,
+		},
+		"Length": {
+			"single":    lengthSingleTmpl,
+			"slice":     lengthSliceTmpl,
+			"ptrsingle": lengthPtrSingleTmpl,
+			"ptrslice":  lengthPtrSliceTmpl,
+		},
+		"LengthUtf8": {
+			"single":    lengthSingleTmpl,
+			"slice":     lengthSliceTmpl,
+			"ptrsingle": lengthPtrSingleTmpl,
+			"ptrslice":  lengthPtrSliceTmpl,
 		},
 		"Not": {
 			"single":    notSingleTmpl,

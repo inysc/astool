@@ -1,7 +1,7 @@
  _{{ .field_name }}_{{ .index }}_enum_found := false
-for _, _{{ .field_name }}_{{ .index }}_v3 := range i.{{ .field_name }} {
-    for _, _{{ .field_name }}_{{ .index }}_v4 := range {{ .rule }} {
-        if _{{ .field_name }}_{{ .index }}_v3 == _{{ .field_name }}_{{ .index }}_v4 {
+for _, v{{ .index }} := range i.{{ .field_name }} {
+    for _, vv{{ .index }} := range {{ .rule }} {
+        if v{{ .index }} == vv{{ .index }} {
             _{{ .field_name }}_{{ .index }}_enum_found = true
             break
         }

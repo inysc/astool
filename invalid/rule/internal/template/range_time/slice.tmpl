@@ -1,21 +1,31 @@
-for _, _{{ .field_name }}_{{ .index }}_v3 := range i.{{ .field_name }} {
+var _{{ .struct_name }}_left_{{ .index }} = time.Now()
+for _, v{{ .index }} := range i.{{ .field_name }} {
     {{- if len_gt_0 .left_val }}
-    if _{{ .field_name }}_{{ .index }}_v3 {{ rRo .left }} {{ .left_val }} {
-        {{- if len_gt_0 .message }}
-        err = {{ .message }}
-        {{- else }}
-        err = errors.New(`invalid<Range>:{{ .struct_name }}.{{ .field_name }} must be {{ tRo .left }} {{ .left_val }}`)
-        {{- end }}
+    {{- if eq .left_val "@now" }}
+    {{- end }}
+    var time_left_{{ .index }} time.Time
+    time_left_{{ .index }}, err = time.Parse({{ .format }}, v{{ .index }})
+    if err != nil {
+        err = fmt.Errorf(`invalid<RangeTime>: {{ .struct_name }}.{{ .field_name }} can not be parse to time<%s>`,err)
+        return
+    }
+    if time_left_{{ .index }}.UnixMicro() {{ rRo .left }} _{{ .struct_name }}_left_{{ .index }}.UnixMicro(){
+        err = errors.New(`invalid<RangeTime>: {{ .struct_name }}.{{ .field_name }} must be {{ tRo .left }} {{ .left_val }})`)
         return
     }
     {{- end }}
     {{- if len_gt_0 .right_val }}
-    if _{{ .field_name }}_{{ .index }}_v3 {{ rRo .right }} {{ .right_val }} {
-        {{- if len_gt_0 .message }}
-        err = {{ .message }}
-        {{- else }}
-        err = errors.New(`invalid<RangeTime>: {{ .struct_name }}.{{ .field_name }} must be {{ tRo .right }} {{ .right_val }}`)
-        {{- end }}
+    {{- if eq .right_val "@now" }}
+    var _{{ .struct_name }}_right_{{ .index }} = time.Now()
+    {{- end }}
+    var time_right_{{ .index }} time.Time
+    time_right_{{ .index }}, err = time.Parse({{ .format }}, v{{ .index }})
+    if err != nil {
+        err = fmt.Errorf(`invalid<RangeTime>: {{ .struct_name }}.{{ .field_name }} can not be parse to time<%s>`,err)
+        return
+    }
+    if time_right_{{ .index }}.UnixMicro() {{ rRo .right }} _{{ .struct_name }}_right_{{ .index }}.UnixMicro(){
+        err = errors.New(`invalid<RangeTime>: {{ .struct_name }}.{{ .field_name }} must be {{ tRo .right }} {{ .right_val }})`)
         return
     }
     {{- end }}

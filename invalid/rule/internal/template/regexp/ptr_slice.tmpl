@@ -1,6 +1,6 @@
 if i.{{ .field_name }} != nil {
-    for _, _{{ .field_name }}_{{ .index }}_v3 := range *(i.{{ .field_name }}) {
-        if _{{ .field_name }}_{{ .index }}_v3 == {{ .rule }} {
+    for _, v{{ .index }} := range *(i.{{ .field_name }}) {
+        if !_{{ .struct_name }}_{{ .index }}.Match(v{{ .index }}) {
             {{- if len_gt_0 .message }}
             err = {{ .message }}
             {{- else }}

@@ -1,5 +1,7 @@
+{{ $func_name := "len" }}
+{{- if eq .iden "LengthUtf8" }} {{ $func_name = "utf8.RuneCountInString" }} {{- end }}
 {{- if len_gt_0 .left_val }}
-if i.{{ .field_name }} {{ rRo .left }} {{ .left_val }} {
+if {{ $func_name }}(i.{{ .field_name }}) {{ rRo .left }} {{ .left_val }} {
     {{- if len_gt_0 .message }}
     err = {{ .message }}
     {{- else }}
@@ -9,7 +11,7 @@ if i.{{ .field_name }} {{ rRo .left }} {{ .left_val }} {
 }
 {{- end }}
 {{- if len_gt_0 .right_val }}
-if i.{{ .field_name }} {{ rRo .right }} {{ .right_val }} {
+if {{ $func_name }}(i.{{ .field_name }}) {{ rRo .right }} {{ .right_val }} {
     {{- if len_gt_0 .message }}
     err = {{ .message }}
     {{- else }}

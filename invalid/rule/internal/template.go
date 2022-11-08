@@ -49,6 +49,19 @@ var (
 	equalSliceTmpl     *template.Template
 	equalPtrSliceTmpl  *template.Template
 
+	//go:embed template/length/single.tmpl
+	lengthSingleStr string
+	//go:embed template/length/ptr_single.tmpl
+	lengthPtrSingleStr string
+	//go:embed template/length/slice.tmpl
+	lengthSliceStr string
+	//go:embed template/length/ptr_slice.tmpl
+	lengthPtrSliceStr   string
+	lengthSingleTmpl    *template.Template
+	lengthPtrSingleTmpl *template.Template
+	lengthSliceTmpl     *template.Template
+	lengthPtrSliceTmpl  *template.Template
+
 	//go:embed template/not/single.tmpl
 	notSingleStr string
 	//go:embed template/not/ptr_single.tmpl
@@ -115,13 +128,13 @@ func init() {
 	prefix :=
 		`{{- if len_gt_0 .tags }}
         OUT{{ .index }}:
-        for _, paramTag := range {{ .tags }} {
-            for _, condTag := range tags {
+		for _, paramTag := range tags {
+            for _, condTag := range {{ .tags }} {
                 if paramTag == condTag {
         {{- end }}`
 	suffix :=
 		`{{- if len_gt_0 .tags }}
-					goto OUT{{ .index }}
+					break OUT{{ .index }}
 				}
 			}
 		}
@@ -238,6 +251,41 @@ func init() {
 			New("invalid_equal_slice_ptr").
 			Funcs(funcMap).
 			Parse(prefix + equalPtrSliceStr + suffix)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	// length / length_utf8
+	{
+		lengthSingleTmpl, err = template.
+			New("invalid_length").
+			Funcs(funcMap).
+			Parse(prefix + lengthSingleStr + suffix)
+		if err != nil {
+			panic(err)
+		}
+
+		lengthPtrSingleTmpl, err = template.
+			New("invalid_length_ptr").
+			Funcs(funcMap).
+			Parse(prefix + lengthPtrSingleStr + suffix)
+		if err != nil {
+			panic(err)
+		}
+
+		lengthSliceTmpl, err = template.
+			New("invalid_length_slice").
+			Funcs(funcMap).
+			Parse(prefix + lengthSliceStr + suffix)
+		if err != nil {
+			panic(err)
+		}
+
+		lengthPtrSliceTmpl, err = template.
+			New("invalid_length_slice_ptr").
+			Funcs(funcMap).
+			Parse(prefix + lengthPtrSliceStr + suffix)
 		if err != nil {
 			panic(err)
 		}
