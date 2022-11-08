@@ -22,10 +22,17 @@ type commonRule struct {
 }
 
 func (cr *commonRule) Prio() int {
-	if cr.Iden == "Default" {
+	switch cr.Iden {
+	case "Default":
 		return 0
+	case "Not":
+		if strings.HasPrefix(cr.Rule, "nil") {
+			return 1
+		}
+		return 2
+	default:
+		return 3
 	}
-	return 2
 }
 
 func (cr *commonRule) Check() string {
