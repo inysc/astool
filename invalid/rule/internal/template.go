@@ -472,7 +472,7 @@ func GetTmpl(iden, typ string) *template.Template {
 		},
 		"Duck": {
 			"single":    duckSingleTmpl,
-			"ptrsingle": duckPtrSliceTmpl,
+			"ptrsingle": duckSingleTmpl,
 			"slice":     duckSliceTmpl,
 			"ptrslice":  duckPtrSliceTmpl,
 		},

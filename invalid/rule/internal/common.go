@@ -47,7 +47,7 @@ func (cr *commonRule) Check() string {
 		"struct_name": cr.StructName,
 	}
 	typ := cr.FieldType
-	if cr.Iden == "Not" && strings.HasPrefix(cr.Rule, "nil") {
+	if (cr.Iden == "Not" || cr.Iden == "Equal") && strings.HasPrefix(cr.Rule, "nil") {
 		typ = strings.TrimPrefix(typ, "*")
 	}
 	err := GetTmpl(cr.Iden, typ).Execute(bs, tmplVal)
