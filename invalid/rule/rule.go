@@ -30,9 +30,13 @@ func NewRule(structName string, field *astool.StructField) string {
 			rule := internal.ParseComment(comment)
 
 			switch rule.Iden {
-			case "Not", "Equal", "Enum", "Regexp", "Default", "Duck", "Unique":
+			case internal.Not, internal.Equal,
+				internal.Enum, internal.Regexp,
+				internal.Default, internal.Duck,
+				internal.Unique:
 				rules = append(rules, internal.NewCommonRule(structName, field.Name, field.Type.String(), rule))
-			case "Range", "RangeTime", "Length", "LengthUtf8":
+			case internal.Range, internal.RangeTime,
+				internal.Length, internal.LengthUtf8:
 				rules = append(rules, internal.NewRangeRule(structName, field.Name, field.Type.String(), rule))
 			default:
 				log.Fatalf("unknown rule: <%s>", rule.Iden)

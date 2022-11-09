@@ -464,67 +464,67 @@ func GetTmpl(iden, typ string) *template.Template {
 	}
 
 	val := map[string]map[string]*template.Template{
-		"Default": {
+		Default: {
 			"single":    defaultSingleTmpl,
 			"ptrsingle": defaultPtrSingleTmpl,
 			"slice":     defaultSingleTmpl,
 			"ptrslice":  defaultPtrSingleTmpl,
 		},
-		"Duck": {
+		Duck: {
 			"single":    duckSingleTmpl,
 			"ptrsingle": duckSingleTmpl,
 			"slice":     duckSliceTmpl,
 			"ptrslice":  duckPtrSliceTmpl,
 		},
-		"Enum": {
+		Enum: {
 			"single":    enumSingleTmpl,
 			"slice":     enumSliceTmpl,
 			"ptrsingle": enumPtrSingleTmpl,
 			"ptrslice":  enumPtrSliceTmpl,
 		},
-		"Equal": {
+		Equal: {
 			"single":    equalSingleTmpl,
 			"slice":     equalSliceTmpl,
 			"ptrsingle": equalPtrSingleTmpl,
 			"ptrslice":  equalPtrSliceTmpl,
 		},
-		"Length": {
+		Length: {
 			"single":    lengthSingleTmpl,
 			"slice":     lengthSliceTmpl,
 			"ptrsingle": lengthPtrSingleTmpl,
 			"ptrslice":  lengthPtrSliceTmpl,
 		},
-		"LengthUtf8": {
+		LengthUtf8: {
 			"single":    lengthSingleTmpl,
 			"slice":     lengthSliceTmpl,
 			"ptrsingle": lengthPtrSingleTmpl,
 			"ptrslice":  lengthPtrSliceTmpl,
 		},
-		"Not": {
+		Not: {
 			"single":    notSingleTmpl,
 			"slice":     notSliceTmpl,
 			"ptrsingle": notPtrSingleTmpl,
 			"ptrslice":  notPtrSliceTmpl,
 		},
-		"Range": {
+		Range: {
 			"single":    rangeSingleTmpl,
 			"slice":     rangeSliceTmpl,
 			"ptrsingle": rangePtrSingleTmpl,
 			"ptrslice":  rangePtrSliceTmpl,
 		},
-		"RangeTime": {
+		RangeTime: {
 			"single":    rangeTimeSingleTmpl,
 			"slice":     rangeTimeSliceTmpl,
 			"ptrsingle": rangeTimePtrSingleTmpl,
 			"ptrslice":  rangeTimePtrSliceTmpl,
 		},
-		"Regexp": {
+		Regexp: {
 			"single":    regexpSingleTmpl,
 			"slice":     regexpSliceTmpl,
 			"ptrsingle": regexpPtrSingleTmpl,
 			"ptrslice":  regexpPtrSliceTmpl,
 		},
-		"Unique": {
+		Unique: {
 			"single":    uniqueSingleTmpl,
 			"ptrsingle": uniquePtrSingleTmpl,
 			"slice":     uniqueSingleTmpl,

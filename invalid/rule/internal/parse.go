@@ -22,7 +22,7 @@ type Rule struct {
 
 func (r *Rule) Rule(iden, typ string) string {
 	rule := r.Get("rule")
-	if iden == "Enum" && rule[0] == '{' {
+	if iden == Enum && rule[0] == '{' {
 		return fmt.Sprintf("[]%s%s", remove_slice_ptr(typ), rule)
 	}
 	return rule

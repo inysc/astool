@@ -54,7 +54,7 @@ func (rr *RangeRule) Check() string {
 }
 
 func (rr *RangeRule) Vars() string {
-	if rr.Iden == "RangeTime" {
+	if rr.Iden == RangeTime {
 		ret := ""
 		if rr.LeftVal != "" && rr.LeftVal != "@now" {
 			ret += fmt.Sprintf("var _%s_left_%d = mustTimeParse(%s, %s)\n", rr.StructName, rr.Index, rr.LeftVal, rr.Format)
