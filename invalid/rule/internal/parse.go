@@ -169,7 +169,8 @@ func FindValue(rule []byte) int {
 				inStr = !inStr
 			}
 		case '{', '}':
-			if !inRaw && !inBae {
+      // TODO: 是不是需要考虑 {{ }} 这种，好像没必要
+			if !inRaw && !inStr {
 				inBae = !inBae
 			}
 		case ',':
