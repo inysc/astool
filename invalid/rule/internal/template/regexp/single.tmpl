@@ -1,4 +1,4 @@
-if !_{{ .struct_name }}_{{ .index }}.Match(i.{{ .field_name }}) {
+if !_{{ .struct_name }}_{{ .index }}.MatchString(i.{{ .field_name }}) {
     {{- if len_gt_0 .message }}
     err = {{ .message }}
     {{- else }}
