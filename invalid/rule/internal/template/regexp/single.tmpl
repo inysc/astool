@@ -2,7 +2,7 @@ if !_{{ .struct_name }}_{{ .index }}.MatchString(i.{{ .field_name }}) {
     {{- if len_gt_0 .message }}
     err = {{ .message }}
     {{- else }}
-    err = errors.New(`invalid<Regexp>: {{ .struct_name }}.{{ .field_name }} must conform to the regex<{{ .regex_value }}>`)
+    err = errors.New(`invalid<Regexp>: {{ .struct_name }}.{{ .field_name }} must conform to the regex<{{ .rule }}>`)
     {{- end }}
     return
 }
