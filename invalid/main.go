@@ -85,6 +85,9 @@ func Parse(st *astool.StructInfo) {
 	CONTENT.P("}\n")
 }
 
+func judgeVar(target string) bool    { return strings.HasPrefix(target, "_"+target+"_") }
+func judgeMethod(target string) bool { return strings.HasPrefix(target, "_"+target+"_Invalid_") }
+
 func SaveFile() {
 	// 读取文件
 	content := astool.MustReadFile(filename)
@@ -107,7 +110,7 @@ func SaveFile() {
 		bs.P(`    _ = utf8.RuneCountInString`)
 		bs.P(")\n")
 	} else {
-		content = astool.RemoveBytes(content, types...)
+		content = astool.RemoveBytes(content, types, judgeVar, judgeMethod)
 	}
 	bs.P(string(content))
 	if !hasTimeFunc {
