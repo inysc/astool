@@ -48,7 +48,7 @@ func init() {
 }
 
 func main() {
-	log.SetFlags(log.Lshortfile)
+	log.SetFlags(log.Llongfile)
 
 	pkg = astool.EasyStructInfos(".", types, tags...)
 	hasTimeFunc = astool.ExistFunc(pkg.Pkg, "mustTimeParse")

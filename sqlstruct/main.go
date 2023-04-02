@@ -5,7 +5,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"go/ast"
 	"go/format"
+	"go/parser"
+	"go/token"
 	"go/types"
 	"log"
 	"os"
@@ -14,9 +17,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/inysc/astool"
 	"golang.org/x/tools/go/packages"
 )
+
+type Pair struct{ First, Second token.Pos }
 
 var (
 	flag_file  = flag.String("file", "sqlstruct.go", "目的文件名")
@@ -25,25 +29,156 @@ var (
 	filename    string
 	structNames []string
 
-	DB_PTR_NAME = regexp.MustCompile("^DbPtr[A-Z]")
-	TARGET_FNS  = []string{
-		"SQLNames", "SQLValues",
-		"SQLPtrNotNilNames", "SQLPtrNotNilValues",
-		"SQLPtrNotPtrNames", "SQLPtrNotPtrValues",
-	}
+	DB_PTR_NAME   = regexp.MustCompile(`^D[Bb]Ptr[A-Z]`)                                           // 指针结构体的结构体名校验
+	DB_FIELD_NAME = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*$`)                                  // 字段名校验
+	TARGET_FNS    = []string{"SQLValues", "SQLPtrNotNilValues", "SQLPtrNotPtrValues", "SQLFixPtr"} // 将为结构体生成这些函数
 )
 
 const (
-	SQLNames           = `func (i *%s) SQLNames() []string { return []string{%s} }` + "\n"
-	SQLValues          = `func (i *%s) SQLValues() []interface{} { return []interface{}{%s} }` + "\n"
-	SQLPtrNotNilNames  = `func (i *%s) SQLPtrNotNilNames() []string { %s }` + "\n"
-	SQLPtrNotNilValues = `func (i *%s) SQLPtrNotNilValues() []interface{} { %s }` + "\n"
-	SQLPtrNotPtrNames  = `func (i *%s) SQLPtrNotPtrNames() []string { return []string{%s} }` + "\n"
-	SQLPtrNotPtrValues = `func (i *%s) SQLPtrNotPtrValues() []interface{} { return []interface{}{%s} }` + "\n"
+	SQLValues          = "// 结构体里的每个字段的 tag 与值 \nfunc (i *%s) SQLValues() SQLPairs { return []SQLPair{%s} }\n"
+	SQLPtrNotNilValues = "// 结构体里的每个不是 nil 的指针字段的 tag 与值 \nfunc (i *%s) SQLPtrNotNilValues() SQLPairs { %s }\n"
+	SQLPtrNotPtrValues = "// 结构体里的每个不是指针字段的 tag 与值 \nfunc (i *%s) SQLPtrNotPtrValues() SQLPairs { return []SQLPair{%s} } \n"
+	SQLFixPtr          = "// 为结构体里为 nil 的指针字段赋一个零值 \nfunc (i *%s) SQLFixPtr() { %s } \n" // 在 insert 时，执行该函数，给那些 nil 的字段赋一个零值
 )
 
-func judgeVar(filed string) bool   { return false }
-func judgeMethod(meth string) bool { return astool.In(TARGET_FNS, meth) }
+func RmFns(src []byte, structNames []string) []byte {
+	file, err := parser.ParseFile(token.NewFileSet(), "", src, parser.AllErrors|parser.ParseComments)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var ps []Pair
+	for _, v := range file.Decls {
+		switch fn := v.(type) {
+		case *ast.FuncDecl:
+			if fn.Recv == nil {
+				continue
+			}
+			if !In(TARGET_FNS, fn.Name.Name) {
+				continue
+			}
+			for _, v := range fn.Recv.List {
+				switch expr := v.Type.(type) {
+				case *ast.StarExpr:
+					switch x := expr.X.(type) {
+					case *ast.Ident:
+						if In(structNames, x.Name) {
+							start := fn.Pos() - 1
+							if fn.Doc != nil {
+								start = fn.Doc.Pos() - 1
+							}
+							ps = append(ps, Pair{start, fn.End()})
+							break
+						}
+					case *ast.IndexExpr: // 泛型
+						if In(structNames, x.X.(*ast.Ident).Name) {
+							start := fn.Pos() - 1
+							if fn.Doc != nil {
+								start = fn.Doc.Pos() - 1
+							}
+							ps = append(ps, Pair{start, fn.End()})
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+	// 去除 content 指定部分
+	for i := len(ps) - 1; i >= 0; i-- {
+		fornt := src[:ps[i].First]
+		end := src[ps[i].Second:]
+		src = append(fornt, end...)
+	}
+	return src
+}
+
+func In(vals []string, target string) bool {
+	for _, v := range vals {
+		if v == target {
+			return true
+		}
+	}
+	return false
+}
+
+func StructParase(st *types.Struct) (sqlFields, sqlPtrTags, sqlPtrNames, sqlNotFields, sqlType []string) {
+	for i := 0; i < st.NumFields(); i++ {
+		field := st.Field(i)
+		fieldName := field.Name()
+		fieldTag := reflect.StructTag(st.Tag(i))
+
+		if !field.Exported() { // 不处理私有字段
+			continue
+		}
+
+		// 解析 tag 信息、字段名信息
+		tag := ""
+		for _, v := range []string{"sql", "SQL", "db"} {
+			get := fieldTag.Get(v)
+			if get == "-" {
+				continue
+			} else if get != "" {
+				tag = get
+				break
+			}
+		}
+		if tag == "" {
+			if field.Anonymous() { // 结构体匿名嵌入，认为是将其字段展开到当前结构体
+				st1, ok := field.Type().Underlying().(*types.Struct)
+				if ok {
+					sf, spt, spn, snf, sfp := StructParase(st1)
+					sqlFields = append(sqlFields, sf...)
+					sqlPtrTags = append(sqlPtrTags, spt...)
+					sqlPtrNames = append(sqlPtrNames, spn...)
+					sqlNotFields = append(sqlNotFields, snf...)
+					sqlType = append(sqlType, sfp...)
+					continue
+				}
+			}
+			tag = fieldName
+		}
+		if DB_FIELD_NAME.MatchString(tag) {
+			tag = fmt.Sprintf("`%s`", tag)
+		}
+		tag = strconv.Quote(tag)
+		sqlFields = append(sqlFields, fmt.Sprintf("{K:%s, V:i.%s}", tag, fieldName))
+		ptype, ok := field.Type().(*types.Pointer)
+		if ok {
+			sqlPtrTags = append(sqlPtrTags, tag)
+			sqlPtrNames = append(sqlPtrNames, fieldName)
+			sqlType = append(sqlType, ptype.Elem().String())
+		} else {
+			sqlNotFields = append(sqlNotFields, fmt.Sprintf("{K:%s, V:i.%s}", tag, fieldName))
+		}
+	}
+	return
+}
+
+// => \n{elem}{sep}{elem}{sep}
+func Join(elems []string, sep string) string {
+	switch len(elems) {
+	case 0:
+		return ""
+	case 1:
+		return "\n" + elems[0] + sep
+	}
+	n := len(sep)*len(elems) + 2
+	for i := 0; i < len(elems); i++ {
+		n += len(elems[i])
+	}
+
+	var b strings.Builder
+	b.Grow(n)
+	b.WriteByte('\n')
+	for _, s := range elems {
+		b.WriteString(s)
+		b.WriteString(sep)
+	}
+	return b.String()
+}
+
+const mode = packages.NeedTypes | packages.NeedTypesInfo |
+	packages.NeedDeps | packages.NeedImports
 
 func main() {
 	flag.Parse()
@@ -56,11 +191,11 @@ func main() {
 	}
 	structNames = strings.Split(*flag_types, ",")
 	if len(structNames) == 0 {
-		log.Fatal("not found structNames")
+		log.Fatal("not found struct names")
 	}
 
-	// 解析目的包
-	pkgs, err := packages.Load(&packages.Config{Mode: packages.NeedTypes}, ".")
+	// 解析当前目录
+	pkgs, err := packages.Load(&packages.Config{Mode: mode}, ".")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,7 +208,7 @@ func main() {
 	// 如果目的文件已存在就清除相关结构体的方法
 	// 不存在就写入一些基本信息
 	buff := bytes.Buffer{}
-	file, err := os.ReadFile(*flag_file)
+	file, err := os.ReadFile(filename)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		log.Fatal(err)
 	}
@@ -81,12 +216,58 @@ func main() {
 		buff.WriteString("// Code generated by invalid. DO NOT EDIT.\n")
 		buff.WriteString("package " + pkg.Name + "\n")
 	} else {
-		buff.Write(astool.RemoveBytes(file, structNames, judgeVar, judgeMethod)) // 移除目标文件中相关方法
+		buff.Write(RmFns(file, structNames)) // 移除目标文件中相关方法
 	}
+
+	scope := pkg.Types.Scope()
+
+	obj := scope.Lookup("SQLPair")
+	if obj == nil {
+		buff.WriteString("type SQLPair struct{ K string; V interface{} }\n")
+	} /* else {
+			named, ok := obj.Type().(*types.Named)
+			if !ok {
+					log.Fatal("命名冲突 SQLPair")
+			}
+			_, ok = named.Underlying().(*types.Struct)
+			if !ok {
+					log.Fatal("命名冲突，SQLPair 不是结构体")
+			}
+			// 应该继续检查字段，不想做了
+	}*/
+
+	obj = scope.Lookup("SQLPairs")
+	if obj == nil {
+		buff.WriteString("type SQLPairs []SQLPair\n")
+		buff.WriteString(`func (sp SQLPairs)Split() (ks []string,vs []interface{}) {
+							for _, v := range sp {
+									ks = append(ks, v.K)
+									vs = append(vs, v.V)
+							}
+							return
+					}` + "\n")
+		buff.WriteString(`func (sp SQLPairs) ToMap() map[string]interface{} {
+					mp := make(map[string]interface{}, len(sp))
+					for _, v := range sp {
+							mp[v.K] = v.V
+					}
+					return mp
+			}` + "\n")
+	} /* else {
+			named, ok := obj.Type().(*types.Named)
+			if !ok {
+					log.Fatal("命名冲突 SQLPairs")
+			}
+			_, ok = named.Underlying().(*types.Slice)
+			if !ok {
+					log.Fatal("命名冲突，SQLPairs 不是切片")
+			}
+			// 应该继续检查 elem ，不想做了
+	}*/
 
 	// 遍历结构体及其字段
 	for _, structName := range structNames {
-		obj := pkg.Types.Scope().Lookup(structName)
+		obj := scope.Lookup(structName)
 		if obj == nil {
 			log.Fatal("no found " + structName)
 		}
@@ -98,63 +279,26 @@ func main() {
 		if !ok {
 			log.Fatal(structName + " is not a struct")
 		}
-		fieldTags := []string{}
-		fieldNames := []string{}
-		ptrFieldName := []string{}
-		notPtrFieldName := []string{}
 
+		sqlFields, sqlPtrTags, sqlPtrNames, sqlNotFields, sqlType := StructParase(st)
 		needPtr := DB_PTR_NAME.MatchString(structName)
-		for i := 0; i < st.NumFields(); i++ {
-			field := st.Field(i)
-			fieldName := field.Name()
-			fieldTag := reflect.StructTag(st.Tag(i))
-
-			if !field.Exported() { // 不处理私有字段
-				continue
-			}
-
-			// 解析 tag 信息、字段名信息
-			if fieldTag.Get("sql") != "" {
-				if fieldTag.Get("sql") == "-" { // 标注忽略的字段
-					continue
-				}
-				fieldTags = append(fieldTags, strconv.Quote(fieldTag.Get("sql")))
-			} else if fieldTag.Get("SQL") != "" { // 兼容一下过往
-				fieldTags = append(fieldTags, strconv.Quote(fieldTag.Get("SQL")))
-			} else if fieldTag.Get("db") != "" {
-				fieldTags = append(fieldTags, strconv.Quote(fieldTag.Get("db")))
-			} else {
-				fieldTags = append(fieldTags, strconv.Quote(fieldName))
-			}
-			fieldNames = append(fieldNames, "i."+fieldName)
-			_, ok = field.Type().(*types.Pointer)
-			if ok {
-				ptrFieldName = append(ptrFieldName, "i."+fieldName)
-			} else {
-				notPtrFieldName = append(notPtrFieldName, "i."+fieldName)
-			}
-		}
 
 		// 写入到缓存
-		buff.WriteString(fmt.Sprintf(SQLNames, structName, strings.Join(fieldTags, ", ")))
-		buff.WriteString(fmt.Sprintf(SQLValues, structName, strings.Join(fieldNames, ", ")))
+		buff.WriteString(fmt.Sprintf(SQLValues, structName, Join(sqlFields, ",\n")))
 		if needPtr {
-			buff.WriteString(fmt.Sprintf(SQLPtrNotPtrValues, structName, strings.Join(notPtrFieldName, ", ")))
-
-			bufVal := bytes.Buffer{}
-			bufName := bytes.Buffer{}
-			bufVal.WriteString("ret := []interface{}{}\n")
-			bufName.WriteString("ret := []string{}\n")
-			template_prt := `if %[1]s != nil { ret = append(ret, %[1]s) }` + "\n"
-			template_name := `if %[1]s != nil { ret = append(ret, %[1]s) }` + "\n"
-			for _, v := range ptrFieldName {
-				bufVal.WriteString(fmt.Sprintf(template_prt, v))
-				bufName.WriteString(fmt.Sprintf(template_name, v))
+			bufn := bytes.NewBufferString("vals := []SQLPair{}\n")
+			bufm := bytes.Buffer{}
+			template_n := "if i.%[1]s != nil { vals = append(vals, SQLPair{K:%[2]s, V:i.%[1]s }) }\n"
+			template_m := "if i.%[1]s == nil { i.%[1]s = new(%[2]s) }\n"
+			for i, v := range sqlPtrNames {
+				bufn.WriteString(fmt.Sprintf(template_n, v, sqlPtrTags[i]))
+				bufm.WriteString(fmt.Sprintf(template_m, v, sqlType[i])) // BUG:
 			}
-			bufVal.WriteString("return ret")
-			bufName.WriteString("return ret")
-			buff.WriteString(fmt.Sprintf(SQLPtrNotNilNames, structName, bufName.Bytes()))
-			buff.WriteString(fmt.Sprintf(SQLPtrNotNilValues, structName, bufVal.Bytes()))
+			bufn.WriteString("return vals")
+
+			buff.WriteString(fmt.Sprintf(SQLPtrNotPtrValues, structName, Join(sqlNotFields, ", \n")))
+			buff.WriteString(fmt.Sprintf(SQLPtrNotNilValues, structName, bufn.Bytes()))
+			buff.WriteString(fmt.Sprintf(SQLFixPtr, structName, bufm.Bytes()))
 		}
 		buff.WriteByte('\n')
 	}
@@ -168,7 +312,7 @@ func main() {
 	} else {
 		file = buf
 	}
-	err = os.WriteFile(*flag_file, file, 0644)
+	err = os.WriteFile(filename, file, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
